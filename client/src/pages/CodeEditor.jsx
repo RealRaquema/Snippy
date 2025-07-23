@@ -75,24 +75,38 @@ export default function CodeEditor() {
     };
   }, [sessionId]);
 
-  // Split pane drag logic
-  const onDrag = (e) => {
-    if (!dragging.current) return;
-    const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-    const percent = Math.max(20, Math.min(80, (x / window.innerWidth) * 100));
-    setEditorWidth(percent);
-  };
+  // Split pane drag logic - reimplemented for robustness
   const onDragStart = (e) => {
+    e.preventDefault();
     dragging.current = true;
     document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
     window.addEventListener('mousemove', onDrag);
-    window.addEventListener('touchmove', onDrag);
+    window.addEventListener('touchmove', onDrag, { passive: false });
     window.addEventListener('mouseup', onDragEnd);
     window.addEventListener('touchend', onDragEnd);
   };
-  const onDragEnd = () => {
+
+  const onDrag = (e) => {
+    if (!dragging.current) return;
+    e.preventDefault();
+    const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    const container = document.querySelector('.editor-main');
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    let offsetX = x - rect.left;
+    const minWidth = rect.width * 0.2;
+    const maxWidth = rect.width * 0.8;
+    if (offsetX < minWidth) offsetX = minWidth;
+    if (offsetX > maxWidth) offsetX = maxWidth;
+    const percent = (offsetX / rect.width) * 100;
+    setEditorWidth(percent);
+  };
+
+  const onDragEnd = (e) => {
     dragging.current = false;
     document.body.style.cursor = '';
+    document.body.style.userSelect = '';
     window.removeEventListener('mousemove', onDrag);
     window.removeEventListener('touchmove', onDrag);
     window.removeEventListener('mouseup', onDragEnd);
@@ -171,7 +185,7 @@ export default function CodeEditor() {
         <div className="editor-panel" style={{ width: `${editorWidth}%` }}>
           <CodeMirror
             value={code}
-            height="60vh"
+            height="100vh"
             extensions={[javascript()]}
             theme={theme === 'dark' ? oneDark : undefined}
             onChange={handleChange}
@@ -183,7 +197,6 @@ export default function CodeEditor() {
           className="splitter"
           onMouseDown={onDragStart}
           onTouchStart={onDragStart}
-          style={{ cursor: 'col-resize', width: 8, background: '#181c24', zIndex: 2 }}
         />
         <div className="output-panel" style={{ width: `${100 - editorWidth}%` }}>
           <div className="output-header">
