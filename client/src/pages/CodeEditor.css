@@ -1,9 +1,61 @@
+
 .editor-container.light {
   background-color: white;
   color: black;
 }
 
 .editor-container.dark {
-  background-color: white;
+  background-color: #181818;
   color: white;
+  min-height: 100vh;
+}
+
+.editor-toolbar {
+  width: 80vw;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.run-btn {
+  background: #1abc9c;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.run-btn.run:hover {
+  background: #16a085;
+}
+.run-btn.stop {
+  background: #e74c3c;
+}
+.run-btn.stop:hover {
+  background: #c0392b;
+}
+
+.output-section {
+  width: 80vw;
+  min-height: 2rem;
+  margin-top: 1.5rem;
+  background: #23272f;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #fff;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.output-success {
+  color: #1abc9c;
+  white-space: pre-wrap;
+}
+.output-error {
+  color: #e74c3c;
+  white-space: pre-wrap;
 }
