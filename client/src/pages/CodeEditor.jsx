@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import io from 'socket.io-client';
@@ -9,8 +10,6 @@ import CopySessionLink from './CopySessionLink';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const socket = io(API_URL, { transports: ['websocket'] });
-
-
 
 export default function CodeEditor() {
   const { sessionId } = useParams();
@@ -90,35 +89,45 @@ export default function CodeEditor() {
   };
 
   if (loading) {
-    return <div className="editor-container dark"><p style={{color: 'white'}}>Loading session...</p></div>;
+    return <div className="editor-app-root"><p style={{color: 'white'}}>Loading session...</p></div>;
   }
   if (error) {
-    return <div className="editor-container dark"><p style={{color: 'red'}}>{error}</p></div>;
+    return <div className="editor-app-root"><p style={{color: 'red'}}>{error}</p></div>;
   }
 
   return (
-    <div className="editor-container dark">
-      <CopySessionLink sessionId={sessionId} />
-      <div className="editor-toolbar">
-        <button
-          ref={runBtnRef}
-          className={`run-btn ${isRunning ? 'stop' : 'run'}`}
-          onClick={isRunning ? handleStop : handleRun}
-          disabled={isRunning && !runError && !output}
-        >
-          {isRunning ? 'Stop' : 'Run'}
-        </button>
+    <div className="editor-app-root">
+      <div className="editor-header">
+        <span className="filename">{sessionId}</span>
+        <div className="editor-header-actions">
+          <CopySessionLink sessionId={sessionId} />
+          <button
+            ref={runBtnRef}
+            className={`run-btn ${isRunning ? 'stop' : 'run'}`}
+            onClick={isRunning ? handleStop : handleRun}
+            disabled={isRunning && !runError && !output}
+          >
+            {isRunning ? 'Stop' : 'Run'}
+          </button>
+        </div>
       </div>
-      <CodeMirror
-        value={code}
-        height="70vh"
-        extensions={[javascript()]}
-        theme={oneDark}
-        onChange={handleChange}
-      />
-      <div className="output-section">
-        {output && <pre className="output-success">{output}</pre>}
-        {runError && <pre className="output-error">{runError}</pre>}
+      <div className="editor-main">
+        <div className="editor-panel">
+          <CodeMirror
+            value={code}
+            height="60vh"
+            extensions={[javascript()]}
+            theme={oneDark}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="output-panel">
+          <div className="output-header">Output</div>
+          <div className="output-section">
+            {output && <pre className="output-success">{output}</pre>}
+            {runError && <pre className="output-error">{runError}</pre>}
+          </div>
+        </div>
       </div>
     </div>
   );

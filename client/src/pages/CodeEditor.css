@@ -1,21 +1,107 @@
 
-.editor-container.light {
-  background-color: white;
-  color: black;
-}
 
-.editor-container.dark {
-  background-color: #181818;
-  color: white;
+.editor-app-root {
+  background: #181c24;
   min-height: 100vh;
+  color: #fff;
+  font-family: 'Fira Mono', 'Consolas', monospace;
 }
 
-.editor-toolbar {
-  width: 80vw;
+.editor-header {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 2rem;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  background: #23272f;
+  padding: 0.8rem 2rem;
+  border-bottom: 1px solid #222;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.filename {
+  font-weight: bold;
+  font-size: 1.1rem;
+  background: #181818;
+  padding: 0.4rem 1.2rem;
+  border-radius: 8px 8px 0 0;
+  margin-right: 1.5rem;
+}
+.editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.run-btn {
+  background: #1abc9c;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+.run-btn.run:hover {
+  background: #16a085;
+}
+.run-btn.stop {
+  background: #e74c3c;
+}
+.run-btn.stop:hover {
+  background: #c0392b;
+}
+
+.editor-main {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: calc(100vh - 56px);
+  min-height: 0;
+}
+.editor-panel, .output-panel {
+  flex: 1;
+  padding: 2rem 1.5rem;
+  background: #232b3e;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  border-radius: 0 0 8px 8px;
+  margin: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.output-panel {
+  background: #181f2a;
+}
+.output-header {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #fff;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.output-section {
+  background: #23272f;
+  border-radius: 8px;
+  padding: 1.2rem 1rem;
+  color: #fff;
+  font-family: 'Fira Mono', 'Consolas', monospace;
+  font-size: 1rem;
+  min-height: 200px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  overflow-x: auto;
+  flex: 1;
+  margin-top: 0.5rem;
+}
+.output-success {
+  color: #1abc9c;
+  white-space: pre-wrap;
+}
+.output-error {
+  color: #e74c3c;
+  white-space: pre-wrap;
 }
 
 .run-btn {
