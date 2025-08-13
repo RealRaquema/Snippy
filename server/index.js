@@ -75,15 +75,17 @@ app.post('/api/run', async (req, res) => {
   }
 
   // Create a new VM for this session
-  const vm = new VM({ timeout: 5000, sandbox: {} });
-  let stopped = false;
   let output = '';
   let error = null;
-  // Capture console.log
-  vm._context.console = {
-    log: (...args) => { output += args.join(' ') + '\n'; },
-    error: (...args) => { output += args.join(' ') + '\n'; }
-  };
+  const vm = new VM({
+    timeout: 5000,
+    sandbox: {
+      console: {
+        log: (...args) => { output += args.join(' ') + '\n'; },
+        error: (...args) => { output += args.join(' ') + '\n'; }
+      }
+    }
+  });
   // Run code async
   const runPromise = new Promise((resolve) => {
     try {
