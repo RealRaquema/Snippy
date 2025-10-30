@@ -1,3 +1,105 @@
+.ͼo{
+  background: none !important;
+}
+
+.cm-gutters{
+  background: none !important;
+}
+.cm-activeLine, .cm-activeLineGutter {
+  background: #232b3e ;
+}
+.cm-selectionBackground, .cm-content ::selection {
+  /* Dark theme selection */
+  background: #3a3f4b !important;
+}
+
+/* Light theme selection colors */
+.editor-app-root.light .cm-selectionBackground,
+.editor-app-root.light .cm-content ::selection {
+  background: rgba(26, 188, 156, 0.15) !important;
+}
+
+/* Light theme selected text color */
+.editor-app-root.light .cm-content ::selection {
+  color: var(--text);
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+.code-language-dropdown {
+  margin-right: 0.4rem;
+  margin-left: auto;
+  box-shadow: none;
+  border-radius: 8px;
+  border: 2px solid var(--run-btn);
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 600;
+  min-width: 140px;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s, color 0.18s;
+  outline: none;
+  appearance: none;
+  z-index: 2;
+}
+.code-language-dropdown:focus, .code-language-dropdown:hover {
+  background: var(--run-btn);
+  color: #fff;
+  border-color: var(--run-btn-hover);
+}
+.code-panel {
+  background: #181c24;
+  border: 1px solid #ffff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 300px;
+  height: 100%;
+  width: 100%;
+  transition: none;
+  overflow: hidden;
+}
+.code-header {
+  font-size: 1.08rem;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.1px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.7rem 1.1rem 0.7rem 1.1rem;
+  border-bottom: 1px solid #23272f;
+  background: #181c24;
+  border-radius: 0;
+  min-height: 44px;
+
+}
+.code-section {
+  background: #181c24;
+  padding: 1.1rem 1.1rem 1.1rem 1.1rem;
+  border-radius: 0;
+  min-height: 160px;
+  height: 100%;
+  font-family: 'JetBrains Mono', 'Fira Mono', Consolas, monospace;
+  font-size: 1.01rem;
+  color: #e0e0e0;
+  overflow-x: auto;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: none;
+  display: flex;
+    overflow: hidden;
+
+}
 .header-session-group {
   display: flex;
   align-items: stretch;
@@ -22,12 +124,15 @@
 }
 .CodeMirror {
   height: 100% !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  background: #181c24 !important;
 }
 
 .editor-app-root {
   display: flex;
   flex-direction: column;
-    height: 100%; 
+    height: 100vh;
     flex:1;
   --bg: #181c24;
   --panel-bg: #232b3e;
@@ -71,6 +176,113 @@
   --terminal-text: #1abc9c;
 }
 
+/* Light theme: copy session link styling */
+.editor-app-root.light .copy-link-btn {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--header-border);
+  box-shadow: none;
+}
+.editor-app-root.light .copy-link-btn:hover,
+.editor-app-root.light .copy-link-btn:focus {
+  background: var(--terminal-bg);
+  color: #fff;
+  border-color: var(--run-btn-hover);
+  box-shadow: 0 4px 16px rgba(26,188,156,0.12);
+}
+
+/* Light theme: language selector adjustments */
+.editor-app-root.light .code-language-dropdown,
+.editor-app-root.light .language-dropdown {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--header-border);
+  box-shadow: none;
+}
+.editor-app-root.light .code-language-dropdown:focus,
+.editor-app-root.light .language-dropdown:focus,
+.editor-app-root.light .code-language-dropdown:hover,
+.editor-app-root.light .language-dropdown:hover {
+  background: var(--terminal-bg);
+  color: #fff;
+  border-color: var(--run-btn-hover);
+}
+
+/* Light theme: clear output button */
+.editor-app-root.light .clear-output-btn {
+  background: none;
+  border: 1px solid var(--header-border);
+  color: var(--text);
+}
+.editor-app-root.light .clear-output-btn:hover,
+.editor-app-root.light .clear-output-btn:focus {
+  background: var(--panel-bg);
+  color: var(--stop-btn);
+  border-color: var(--stop-btn);
+}
+
+/* Light-mode specific overrides for header filename and output panels */
+.editor-app-root.light .filename {
+  color: var(--text);
+  background: var(--filename-bg);
+  border-right: 1px solid var(--header-border);
+}
+
+/* Light theme: code editor area */
+.editor-app-root.light .code-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--header-border);
+}
+
+.editor-app-root.light .code-header {
+  background: var(--panel-bg);
+  color: var(--text);
+  border-bottom: 1px solid var(--header-border);
+}
+
+.editor-app-root.light .code-section {
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+.editor-app-root.light .CodeMirror {
+  background: var(--panel-bg) !important;
+}
+
+.editor-app-root.light .cm-activeLine, 
+.editor-app-root.light .cm-activeLineGutter {
+  background: var(--output-bg);
+}
+
+.editor-app-root.light .cm-gutters {
+  background: var(--panel-bg) !important;
+  border-right: 1px solid var(--header-border);
+}
+
+/* Light theme: output area */
+.editor-app-root.light .output-panel {
+  background: var(--output-bg);
+  border: 1px solid var(--header-border);
+}
+
+.editor-app-root.light .output-header {
+  background: var(--output-bg);
+  color: var(--text);
+  border-bottom: 1px solid var(--header-border);
+}
+
+.editor-app-root.light .output-section.terminal-output,
+.editor-app-root.light .output-section {
+  background: var(--output-bg);
+  color: var(--text);
+}
+
+.editor-app-root.light .terminal-placeholder {
+  background: var(--panel-bg);
+  color: var(--text);
+  opacity: 0.7;
+}
+
 .editor-header {
   display: flex;
   align-items: center;
@@ -99,6 +311,22 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.language-dropdown {
+  background: #181c24;
+  border: 1px solid rgb(86, 86, 86);
+  border-radius: 5px;
+  padding: 0.48rem 1.3rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  margin-right: 1rem;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s, color 0.18s;
+  z-index: 2;
+}
+.language-dropdown:focus, .language-dropdown:hover {
+  background: #3a3f4b;
 }
 .run-btn.modern {
   background: var(--run-btn);
@@ -135,30 +363,33 @@
 }
 .theme-toggle-btn {
   background: none;
-  border: 1px solid var(--header-border);
+  border: 1px solid rgb(79, 79, 79);
   color: var(--text);
-  border-radius: 50%;
-  width: 2.2rem;
-  height: 2.2rem;
-  font-size: 1.2rem;
+  width: 40px;
+  height: 36px;
   margin-right: 1rem;
   cursor: pointer;
-    border-radius: 6px;
-    padding: 0.48rem 1.3rem;
-    font-size: 1.08rem;
-    font-weight: 500;
-    transition: background 0.18s, box-shadow 0.18s;
-    box-shadow: none;
-    outline: none;
-    margin-left: 0.7rem;
-    min-width: 80px;
-    letter-spacing: 0.01em;
+  border-radius: 8px;
+  padding: 0.4rem;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.18s, box-shadow 0.18s, border 0.18s;
+  box-shadow: none;
+  outline: none;
+  margin-left: 0.7rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s, border 0.18s;
 }
 .theme-toggle-btn:hover {
   background: var(--panel-bg);
+}
+
+.theme-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  color: inherit;
 }
 
 .editor-main {
@@ -173,20 +404,14 @@
   background: #23272f;
   color: #fff;
   border: none;
-  border-radius: 0;
   padding: 0.6rem 1.3rem;
   font-size: 1.08rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-  outline: none;
-  min-width: 120px;
-  letter-spacing: 0.01em;
-  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-left: 1px solid #23272f;
 }
 .copy-link-btn:hover, .copy-link-btn:focus {
   background: #1abc9c;
@@ -256,28 +481,30 @@
   min-height: 44px;
 }
 
-.clear-output-btn.icon {
+.clear-output-btn {
   background: none;
   border: 1px solid #23272f;
-  padding: 0.18rem 0.7rem;
+  padding: 0.48rem 1.2rem;
   margin-left: 0.7rem;
-    border-radius: 6px;
+  border-radius: 6px;
   cursor: pointer;
   color: #fff;
   display: flex;
   align-items: center;
-    font-size: 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
   transition: background 0.13s, color 0.13s, border 0.13s;
   outline: none;
   box-shadow: none;
-    min-width: 36px;
-    min-height: 36px;
-    justify-content: center;
+  min-width: 80px;
+  height: 36px;
+  justify-content: center;
+  letter-spacing: 0.3px;
 }
-.clear-output-btn.icon:hover, .clear-output-btn.icon:focus {
+.clear-output-btn:hover, .clear-output-btn:focus {
   background: #23272f;
-    color: #e74c3c;
-    border: 1px solid #e74c3c;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
 }
 .clear-output-btn:hover, .clear-output-btn:focus {
   background: var(--btn-hover-bg, #3a3f4b);
@@ -346,7 +573,6 @@
 .output-section {
   width: 80vw;
   min-height: 2rem;
-  margin-top: 1.5rem;
   background: #23272f;
   border-radius: 8px;
   padding: 1rem;
@@ -389,4 +615,69 @@
 
 .splitter:hover::before {
   opacity: 0.25;
+}
+.ͼ1{
+  width: 100vw;
+}
+.copy-code-btn {
+  background: transparent;
+  border: 1px solid #2d3138;
+  color: #fff;
+  padding: 0.28rem 0.5rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  min-width: 40px;
+  height: 36px;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s, transform 0.12s;
+  position: relative;
+  margin-left: 0.2rem;
+}
+.copy-code-btn svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+.copy-code-btn:hover {
+  background: #23272f;
+  color: #1abc9c;
+  transform: translateY(-1px);
+}
+.copy-code-btn.copied {
+  background: #1abc9c;
+  color: #07221a;
+  border-color: #16a085;
+}
+
+/* Light theme: copy code button */
+.editor-app-root.light .copy-code-btn {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--header-border);
+}
+.editor-app-root.light .copy-code-btn:hover {
+  background: var(--run-btn);
+  color: #fff;
+  border-color: var(--run-btn-hover);
+}
+.editor-app-root.light .copy-code-btn.copied {
+  background: var(--run-btn);
+  color: #fff;
+  border-color: var(--run-btn-hover);
+  box-shadow: 0 2px 8px rgba(26,188,156,0.15);
+}
+.copy-tooltip {
+  position: absolute;
+  transform: translateY(-80%);
+  background: #111;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  white-space: nowrap;
 }

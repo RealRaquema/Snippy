@@ -1,9 +1,11 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import io from 'socket.io-client';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { cpp } from '@codemirror/lang-cpp';
+import { java } from '@codemirror/lang-java';
 import { oneDark } from '@codemirror/theme-one-dark';
 import './CodeEditor.css';
 import CopySessionLink from './CopySessionLink';
@@ -14,6 +16,13 @@ const socket = io(API_URL, { transports: ['websocket'] });
 
 
 export default function CodeEditor() {
+  const languageOptions = [
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'python', label: 'Python' },
+    { value: 'cpp', label: 'C++' },
+    { value: 'c', label: 'C' },
+    { value: 'java', label: 'Java' },
+  ];
   const { sessionId } = useParams();
   const [code, setCode] = useState('//Start Coding...');
   const [loading, setLoading] = useState(true);
@@ -22,6 +31,8 @@ export default function CodeEditor() {
   const [output, setOutput] = useState('');
   const [runError, setRunError] = useState('');
   const [theme, setTheme] = useState('dark');
+  const [language, setLanguage] = useState('javascript');
+  const [copied, setCopied] = useState(false);
   const [editorWidth, setEditorWidth] = useState(50); // percent
   const runBtnRef = useRef();
   const dragging = useRef(false);
@@ -121,6 +132,53 @@ export default function CodeEditor() {
     socket.emit('codeChange', { sessionId, code: value });
   };
 
+  // Change language handler
+  const handleLanguageChange = (e) => {
+    setLanguage(e.target.value);
+    // Optionally, set starter code for each language
+    switch (e.target.value) {
+      case 'python':
+        setCode('# Start Coding in Python...');
+        break;
+      case 'cpp':
+        setCode('// Start Coding in C++...');
+        break;
+      case 'c':
+        setCode('// Start Coding in C...');
+        break;
+      case 'java':
+        setCode('// Start Coding in Java...');
+        break;
+      default:
+        setCode('// Start Coding in JavaScript...');
+    }
+  };
+
+  // Copy code to clipboard
+  const handleCopyCode = async () => {
+    try {
+      if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(code || '');
+      } else {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = code || '';
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      // ignore copy errors
+      console.error('Copy failed', err);
+    }
+  };
+
   const handleRun = async () => {
     setIsRunning(true);
     setOutput('');
@@ -160,6 +218,17 @@ export default function CodeEditor() {
     return <div className="editor-app-root"><p style={{color: 'red'}}>{error}</p></div>;
   }
 
+  // Choose CodeMirror extension based on language
+  const getExtension = () => {
+    switch (language) {
+      case 'python': return python();
+      case 'cpp': return cpp();
+      case 'c': return cpp(); // C uses cpp extension for highlighting
+      case 'java': return java();
+      default: return javascript();
+    }
+  };
+
   return (
     <div className={`editor-app-root ${theme}`}>
       <div className="editor-header">
@@ -168,8 +237,17 @@ export default function CodeEditor() {
           <CopySessionLink sessionId={sessionId} />
         </div>
         <div className="editor-header-actions">
-          <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle theme">
-            {theme === 'dark' ? '🌙' : '☀️'}
+          <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle theme" aria-label="Toggle theme">
+            {theme === 'dark' ? (
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="4" fill="currentColor" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
           </button>
           <button
             ref={runBtnRef}
@@ -177,21 +255,49 @@ export default function CodeEditor() {
             onClick={isRunning ? handleStop : handleRun}
             disabled={isRunning && !runError && !output}
           >
-            {isRunning ? 'Stop' : 'Run'}
+            {isRunning ? 'Stop' : 'Run Code'}
           </button>
         </div>
       </div>
       <div className="editor-main" style={{ fontFamily: 'Fira Mono, JetBrains Mono, Consolas, monospace' }}>
-        <div className="editor-panel" style={{ width: `${editorWidth}%` }}>
-          <CodeMirror
-            value={code}
-            height="100vh"
-            extensions={[javascript()]}
-            theme={theme === 'dark' ? oneDark : undefined}
-            onChange={handleChange}
-            style={{ fontFamily: 'Fira Mono, JetBrains Mono, Consolas, monospace', fontSize: '1.1rem' }}
-            ref={codeMirrorRef}
-          />
+        <div className="output-panel code-panel" style={{ width: `${editorWidth}%` }}>
+          <div className="output-header code-header">
+            <span>Code</span>
+            <select
+              className="language-dropdown code-language-dropdown"
+              value={language}
+              onChange={handleLanguageChange}
+              title="Choose language"
+            >
+              {languageOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <button
+              className={`copy-code-btn icon ${copied ? 'copied' : ''}`}
+              onClick={handleCopyCode}
+              title={copied ? 'Copied' : 'Copy code'}
+              aria-label="Copy code"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 2H8a2 2 0 0 0-2 2v2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="8" y="6" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 6V4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {copied && <span className="copy-tooltip">Copied</span>}
+            </button>
+          </div>
+          <div className="output-section terminal-output initial-terminal code-section">
+            <CodeMirror
+              value={code}
+              height="100vh" /* Changed height to a static value to fill the viewport */
+              extensions={[getExtension()]}
+              theme={theme === 'dark' ? oneDark : undefined}
+              onChange={handleChange}
+              style={{ fontFamily: 'Fira Mono, JetBrains Mono, Consolas, monospace', fontSize: '1.1rem', background: 'transparent' }}
+              ref={codeMirrorRef}
+            />
+          </div>
         </div>
         <div
           className="splitter"
@@ -201,11 +307,8 @@ export default function CodeEditor() {
         <div className="output-panel" style={{ width: `${100 - editorWidth}%` }}>
           <div className="output-header">
             <span>Output</span>
-            <button className="clear-output-btn icon" onClick={handleClearOutput} title="Clear Output" aria-label="Clear Output">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" fill="none"/>
-                <path d="M7 13L13 7M13 13L7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+            <button className="clear-output-btn" onClick={handleClearOutput} title="Clear Output" aria-label="Clear Output">
+              Clear
             </button>
           </div>
           <div className="output-section terminal-output initial-terminal">
