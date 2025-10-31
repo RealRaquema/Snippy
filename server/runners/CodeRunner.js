@@ -6,6 +6,16 @@ const { v4: uuidv4 } = require('uuid');
 class CodeRunner {
     constructor() {
         this.runningProcesses = new Map();
+        
+        // Check Java environment on startup
+        const javaCheck = spawnSync('java', ['-version']);
+        if (javaCheck.error) {
+            console.error('Java initialization error:', javaCheck.error);
+            console.error('PATH:', process.env.PATH);
+            console.error('JAVA_HOME:', process.env.JAVA_HOME);
+        } else {
+            console.log('Java initialized successfully');
+        }
     }
 
     async runPython(code) {
