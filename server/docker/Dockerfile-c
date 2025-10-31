@@ -1,0 +1,15 @@
+FROM gcc:latest
+
+WORKDIR /app
+
+# Create non-root user
+RUN groupadd -r coderunner && useradd -r -g coderunner coderunner
+
+# Copy and compile the runner
+COPY runner.c .
+RUN gcc -o runner runner.c && \
+    chown -R coderunner:coderunner /app
+
+USER coderunner
+
+CMD ["./runner"]

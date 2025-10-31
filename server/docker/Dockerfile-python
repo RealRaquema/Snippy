@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Create non-root user
+RUN groupadd -r coderunner && useradd -r -g coderunner coderunner
+
+# Copy the runner script
+COPY runner.py .
+RUN chown -R coderunner:coderunner /app
+
+USER coderunner
+
+CMD ["python", "runner.py"]

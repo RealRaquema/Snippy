@@ -6,18 +6,24 @@ const cors = require('cors');
 const CodeSession = require('./models/CodeSession');
 const { Server } = require('socket.io');
 const { VM } = require('vm2');
+const DockerManager = require('./docker/DockerManager');
 require('dotenv').config();
 
-// Map to keep track of running VMs per session (per tab)
+// Initialize Docker Manager
+const dockerManager = new DockerManager();
+
+// Map to keep track of running VMs per session (for JavaScript only)
 const runningVMs = new Map();
 
 const app = express();
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow localhost and any vercel.app subdomain
+    // Allow localhost, vercel.app, and render.com subdomains
     const allowed = [
       /^http:\/\/localhost:\d+$/,
-      /^https?:\/\/([\w-]+\.)*vercel\.app$/
+      /^https?:\/\/([\w-]+\.)*vercel\.app$/,
+      /^https?:\/\/([\w-]+\.)*render\.com$/,
+      /^https?:\/\/([\w-]+\.)*onrender\.com$/
     ];
     if (!origin || allowed.some(r => r.test(origin))) {
       callback(null, true);
@@ -37,7 +43,9 @@ const io = new Server(server, {
       'http://localhost:3000',
       'http://localhost:5173',
       'https://snippy-git-main-becomefaisals-projects.vercel.app',
-      'https://snippy-five.vercel.app'
+      'https://snippy-five.vercel.app',
+      /^https?:\/\/([\w-]+\.)*render\.com$/,
+      /^https?:\/\/([\w-]+\.)*onrender\.com$/
     ],
     methods: ['GET', 'POST'],
     credentials: true
@@ -62,78 +70,108 @@ io.on('connection', (socket) => {
   });
 });
 
-// --- Run/Stop JS code API ---
-// POST /api/run { sessionId, code }
+// Run code API
 app.post('/api/run', async (req, res) => {
-  const { sessionId, code } = req.body;
-  if (!sessionId || !code) return res.status(400).json({ error: 'Missing sessionId or code' });
-
-  // If already running, stop previous
-  if (runningVMs.has(sessionId)) {
-    try { runningVMs.get(sessionId).vm?.terminate?.(); } catch {}
-    runningVMs.delete(sessionId);
+  const { sessionId, code, language = 'javascript' } = req.body;
+  if (!sessionId || !code) {
+    return res.status(400).json({ error: 'Missing sessionId or code' });
   }
 
-  // Create a new VM for this session
-  let output = '';
-  let error = null;
-  const vm = new VM({
-    timeout: 5000,
-    sandbox: {
-      console: {
-        log: (...args) => { output += args.join(' ') + '\n'; },
-        error: (...args) => { output += args.join(' ') + '\n'; }
-      }
+  try {
+    switch (language.toLowerCase()) {
+      case 'javascript':
+        // For JavaScript, use VM2
+        if (runningVMs.has(sessionId)) {
+          try { runningVMs.get(sessionId).vm?.terminate?.(); } catch {}
+          runningVMs.delete(sessionId);
+        }
+
+        let output = '';
+        const vm = new VM({
+          timeout: 5000,
+          sandbox: {
+            console: {
+              log: (...args) => { output += args.join(' ') + '\n'; },
+              error: (...args) => { output += args.join(' ') + '\n'; }
+            }
+          }
+        });
+        try {
+          runningVMs.set(sessionId, { vm });
+          const result = vm.run(code);
+          output += (result !== undefined ? String(result) : '');
+          runningVMs.delete(sessionId);
+          res.json({ output });
+        } catch (err) {
+          runningVMs.delete(sessionId);
+          res.status(400).json({ error: err.message });
+        }
+        break;
+
+      case 'python':
+      case 'java':
+      case 'c':
+      case 'cpp':
+        // Use Docker for other languages
+        try {
+          const result = await dockerManager.runCode(language, code);
+          if (result.success) {
+            res.json({ output: result.output });
+          } else {
+            res.status(400).json({ 
+              error: result.error || 'Execution failed',
+              output: result.output || ''
+            });
+          }
+        } catch (err) {
+          res.status(500).json({ 
+            error: 'Internal server error', 
+            details: err.message
+          });
+        }
+        break;
+
+      default:
+        res.status(400).json({ 
+          error: `Unsupported language: ${language}. Supported languages are: javascript, python, java, c, cpp`
+        });
+        break;
     }
-  });
-  // Run code async
-  const runPromise = new Promise((resolve) => {
-    try {
-      const result = vm.run(code);
-      output += (result !== undefined ? String(result) : '');
-      resolve();
-    } catch (err) {
-      error = err.message;
-      resolve();
-    }
-  });
-  runningVMs.set(sessionId, { vm, runPromise });
-  await runPromise;
-  runningVMs.delete(sessionId);
-  if (error) return res.json({ error });
-  res.json({ output });
+  } catch (err) {
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: err.message
+    });
+  }
 });
 
 // POST /api/stop { sessionId }
-app.post('/api/stop', (req, res) => {
+app.post('/api/stop', async (req, res) => {
   const { sessionId } = req.body;
   if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' });
+  
+  let stopped = false;
+  
+  // Stop VM if running
   if (runningVMs.has(sessionId)) {
-    try { runningVMs.get(sessionId).vm?.terminate?.(); } catch {}
+    try { 
+      runningVMs.get(sessionId).vm?.terminate?.(); 
+      stopped = true;
+    } catch {}
     runningVMs.delete(sessionId);
-    return res.json({ stopped: true });
   }
-  res.json({ stopped: false });
+
+  // Stop Docker container if running
+  try {
+    await dockerManager.stopContainer(sessionId);
+    stopped = true;
+  } catch (error) {
+    console.error('Failed to stop container:', error);
+  }
+
+  res.json({ stopped });
 });
 
-//Rest Apis
-io.on('connection', (socket) => {
-  socket.on('join', ({ sessionId }) => {
-    socket.join(sessionId); // Join a specific "room" for that session
-  });
-
-  socket.on('codeChange', async ({ sessionId, code }) => {
-    socket.to(sessionId).emit('codeChange', code);
-    await CodeSession.updateOne(
-      { sessionId },
-      { code },
-      { upsert: true }
-    );
-  });
-
-  socket.on('disconnect', () => {
-  });
-});
 
 mongoose.connect(process.env.MONGO_URL).then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
@@ -154,5 +192,5 @@ app.get('/api/session/:id', async (req, res) => {
 
 
 
-const PORT = 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
