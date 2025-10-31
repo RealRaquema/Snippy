@@ -42,31 +42,51 @@ class CodeRunner {
         const filePath = path.join(tempDir, 'Main.java');
         
         try {
+            // Ensure the temp directory exists
             await fs.mkdir(tempDir, { recursive: true });
             await fs.writeFile(filePath, code);
             
-            // Compile
+            // Check if Java is available
+            const javaCheck = spawnSync('java', ['-version']);
+            if (javaCheck.error) {
+                return {
+                    success: false,
+                    error: 'Java is not installed or not accessible',
+                    output: 'Java runtime is not available on the server.'
+                };
+            }
+            
+            // Compile with detailed error output
             const compilation = spawnSync('javac', [filePath], {
                 encoding: 'utf-8',
                 maxBuffer: 1024 * 1024
             });
 
             if (compilation.status !== 0) {
+                const errorOutput = compilation.stderr || compilation.stdout || 'Unknown compilation error';
                 return {
                     success: false,
                     error: 'Compilation failed',
-                    output: compilation.stderr
+                    output: `Compilation Error:\n${errorOutput}`
                 };
             }
 
-            // Run
+            // Run with increased timeout for Java's slower startup
             const process = spawnSync('java', ['-cp', tempDir, 'Main'], {
-                timeout: 5000,
+                timeout: 10000, // Increased timeout to 10 seconds
                 encoding: 'utf-8',
                 maxBuffer: 1024 * 1024
             });
 
-            return this._formatOutput(process);
+            // Format and return the output
+            const result = this._formatOutput(process);
+            
+            // Add debugging information for non-success cases
+            if (!result.success) {
+                result.output = `Execution Output:\n${result.output}\n\nError Details:\n${result.error}`;
+            }
+            
+            return result;
         } catch (error) {
             return {
                 success: false,

@@ -2,7 +2,7 @@ services:
   - type: web
     name: snippy-server
     env: node
-    buildCommand: cd server && npm install
+    buildCommand: cd server && chmod +x build.sh && ./build.sh && npm install
     startCommand: cd server && node index.js
     envVars:
       - key: MONGO_URL

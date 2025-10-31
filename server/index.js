@@ -7,7 +7,11 @@ const CodeSession = require('./models/CodeSession');
 const { Server } = require('socket.io');
 const { VM } = require('vm2');
 const CodeRunner = require('./runners/CodeRunner');
+const checkDependencies = require('./runners/checkDependencies');
 require('dotenv').config();
+
+// Check required dependencies
+checkDependencies();
 
 // Initialize code runner and VM map
 const codeRunner = new CodeRunner();
