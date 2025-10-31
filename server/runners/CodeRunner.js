@@ -6,16 +6,6 @@ const { v4: uuidv4 } = require('uuid');
 class CodeRunner {
     constructor() {
         this.runningProcesses = new Map();
-        
-        // Check Java environment on startup
-        const javaCheck = spawnSync('java', ['-version']);
-        if (javaCheck.error) {
-            console.error('Java initialization error:', javaCheck.error);
-            console.error('PATH:', process.env.PATH);
-            console.error('JAVA_HOME:', process.env.JAVA_HOME);
-        } else {
-            console.log('Java initialized successfully');
-        }
     }
 
     async runPython(code) {
@@ -47,69 +37,7 @@ class CodeRunner {
         }
     }
 
-    async runJava(code) {
-        const tempDir = path.join(__dirname, 'temp', uuidv4());
-        const filePath = path.join(tempDir, 'Main.java');
-        
-        try {
-            // Ensure the temp directory exists
-            await fs.mkdir(tempDir, { recursive: true });
-            await fs.writeFile(filePath, code);
-            
-            // Check if Java is available
-            const javaCheck = spawnSync('java', ['-version']);
-            if (javaCheck.error) {
-                return {
-                    success: false,
-                    error: 'Java is not installed or not accessible',
-                    output: 'Java runtime is not available on the server.'
-                };
-            }
-            
-            // Compile with detailed error output
-            const compilation = spawnSync('javac', [filePath], {
-                encoding: 'utf-8',
-                maxBuffer: 1024 * 1024
-            });
-
-            if (compilation.status !== 0) {
-                const errorOutput = compilation.stderr || compilation.stdout || 'Unknown compilation error';
-                return {
-                    success: false,
-                    error: 'Compilation failed',
-                    output: `Compilation Error:\n${errorOutput}`
-                };
-            }
-
-            // Run with increased timeout for Java's slower startup
-            const process = spawnSync('java', ['-cp', tempDir, 'Main'], {
-                timeout: 10000, // Increased timeout to 10 seconds
-                encoding: 'utf-8',
-                maxBuffer: 1024 * 1024
-            });
-
-            // Format and return the output
-            const result = this._formatOutput(process);
-            
-            // Add debugging information for non-success cases
-            if (!result.success) {
-                result.output = `Execution Output:\n${result.output}\n\nError Details:\n${result.error}`;
-            }
-            
-            return result;
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        } finally {
-            try {
-                await fs.rm(tempDir, { recursive: true, force: true });
-            } catch (error) {
-                console.error('Cleanup error:', error);
-            }
-        }
-    }
+    // Java support removed
 
     async runCpp(code) {
         const tempDir = path.join(__dirname, 'temp', uuidv4());

@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
-    "@codemirror/lang-java": "^6.0.2",
     "@codemirror/lang-javascript": "^6.2.3",
     "@codemirror/lang-python": "^6.2.1",
     "@uiw/react-codemirror": "^4.23.12",
@@ -19,7 +18,6 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.0",
     "react-toastify": "^11.0.5",
-    "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {

@@ -8,6 +8,7 @@ const { Server } = require('socket.io');
 const { VM } = require('vm2');
 const CodeRunner = require('./runners/CodeRunner');
 const checkDependencies = require('./runners/checkDependencies');
+const { spawnSync } = require('child_process');
 require('dotenv').config();
 
 // Check required dependencies
@@ -128,25 +129,7 @@ app.post('/api/run', async (req, res) => {
           });
         }
         break;
-
-      case 'java':
-        try {
-          const result = await codeRunner.runJava(code);
-          if (result.success) {
-            res.json({ output: result.output });
-          } else {
-            res.status(400).json({ 
-              error: result.error || 'Execution failed',
-              output: result.output || ''
-            });
-          }
-        } catch (err) {
-          res.status(500).json({ 
-            error: 'Internal server error', 
-            details: err.message
-          });
-        }
-        break;
+      
 
       case 'cpp':
         try {
@@ -188,7 +171,7 @@ app.post('/api/run', async (req, res) => {
 
       default:
         res.status(400).json({ 
-          error: `Unsupported language: ${language}. Supported languages are: javascript, python, java, c, cpp`
+          error: `Unsupported language: ${language}. Supported languages are: javascript, python, c, cpp`
         });
         break;
     }
@@ -217,12 +200,7 @@ app.post('/api/stop', async (req, res) => {
   }
 
   // Stop Docker container if running
-  try {
-    await dockerManager.stopContainer(sessionId);
-    stopped = true;
-  } catch (error) {
-    console.error('Failed to stop container:', error);
-  }
+  // No Docker containers used anymore; runtime processes are handled by CodeRunner
 
   res.json({ stopped });
 });
@@ -230,6 +208,17 @@ app.post('/api/stop', async (req, res) => {
 
 mongoose.connect(process.env.MONGO_URL).then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
+
+// Lightweight health endpoint to help Render / CI confirm runtimes are present
+app.get('/api/health', (req, res) => {
+  const pythonCheck = spawnSync('python3', ['-V']);
+  const gccCheck = spawnSync('gcc', ['-v']);
+
+  const python = pythonCheck.error ? { installed: false, message: pythonCheck.error.message } : { installed: true, version: (pythonCheck.stdout || pythonCheck.stderr || '').toString().trim() };
+  const gcc = gccCheck.error ? { installed: false, message: gccCheck.error.message } : { installed: true, version: (gccCheck.stdout || gccCheck.stderr || '').toString().trim() };
+
+  res.json({ ok: true, python, gcc });
+});
 
 // API routes
 app.post('/api/create', async (req, res) => {

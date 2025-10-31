@@ -5,7 +5,6 @@ import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
 import { cpp } from '@codemirror/lang-cpp';
-import { java } from '@codemirror/lang-java';
 import { oneDark } from '@codemirror/theme-one-dark';
 import './CodeEditor.css';
 import CopySessionLink from './CopySessionLink';
@@ -21,7 +20,6 @@ export default function CodeEditor() {
     { value: 'python', label: 'Python' },
     { value: 'cpp', label: 'C++' },
     { value: 'c', label: 'C' },
-    { value: 'java', label: 'Java' },
   ];
   const { sessionId } = useParams();
   const [code, setCode] = useState('//Start Coding...');
@@ -147,9 +145,7 @@ export default function CodeEditor() {
       case 'c':
         setCode('#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}');
         break;
-      case 'java':
-        setCode('public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
-        break;
+      // Java removed
       default:
         setCode('console.log("Hello, World!");');
     }
@@ -236,7 +232,6 @@ export default function CodeEditor() {
       case 'python': return python();
       case 'cpp': return cpp();
       case 'c': return cpp(); // C uses cpp extension for highlighting
-      case 'java': return java();
       default: return javascript();
     }
   };

@@ -1,15 +1,6 @@
 const { spawnSync } = require('child_process');
 
 function checkDependencies() {
-    // Check Java
-    const java = spawnSync('java', ['-version']);
-    if (java.error) {
-        console.error('Java is not installed or not accessible');
-        console.error('Please install Java JDK to enable Java code execution');
-    } else {
-        console.log('Java is available');
-    }
-
     // Check Python
     const python = spawnSync('python3', ['-V']);
     if (python.error) {
