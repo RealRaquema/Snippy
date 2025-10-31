@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: snippy-server
+    env: node
+    buildCommand: cd server && npm install
+    startCommand: cd server && node index.js
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: PORT
+        value: 5000
+    autoDeploy: true

@@ -6,13 +6,11 @@ const cors = require('cors');
 const CodeSession = require('./models/CodeSession');
 const { Server } = require('socket.io');
 const { VM } = require('vm2');
-const DockerManager = require('./docker/DockerManager');
+const CodeRunner = require('./runners/CodeRunner');
 require('dotenv').config();
 
-// Initialize Docker Manager
-const dockerManager = new DockerManager();
-
-// Map to keep track of running VMs per session (for JavaScript only)
+// Initialize code runner and VM map
+const codeRunner = new CodeRunner();
 const runningVMs = new Map();
 
 const app = express();
@@ -109,12 +107,65 @@ app.post('/api/run', async (req, res) => {
         break;
 
       case 'python':
-      case 'java':
-      case 'c':
-      case 'cpp':
-        // Use Docker for other languages
         try {
-          const result = await dockerManager.runCode(language, code);
+          const result = await codeRunner.runPython(code);
+          if (result.success) {
+            res.json({ output: result.output });
+          } else {
+            res.status(400).json({ 
+              error: result.error || 'Execution failed',
+              output: result.output || ''
+            });
+          }
+        } catch (err) {
+          res.status(500).json({ 
+            error: 'Internal server error', 
+            details: err.message
+          });
+        }
+        break;
+
+      case 'java':
+        try {
+          const result = await codeRunner.runJava(code);
+          if (result.success) {
+            res.json({ output: result.output });
+          } else {
+            res.status(400).json({ 
+              error: result.error || 'Execution failed',
+              output: result.output || ''
+            });
+          }
+        } catch (err) {
+          res.status(500).json({ 
+            error: 'Internal server error', 
+            details: err.message
+          });
+        }
+        break;
+
+      case 'cpp':
+        try {
+          const result = await codeRunner.runCpp(code);
+          if (result.success) {
+            res.json({ output: result.output });
+          } else {
+            res.status(400).json({ 
+              error: result.error || 'Execution failed',
+              output: result.output || ''
+            });
+          }
+        } catch (err) {
+          res.status(500).json({ 
+            error: 'Internal server error', 
+            details: err.message
+          });
+        }
+        break;
+
+      case 'c':
+        try {
+          const result = await codeRunner.runC(code);
           if (result.success) {
             res.json({ output: result.output });
           } else {

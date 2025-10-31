@@ -5,7 +5,30 @@ const { v4: uuidv4 } = require('uuid');
 
 class DockerManager {
     constructor() {
-        this.docker = new Docker();
+        // Try different Docker socket configurations
+        const socketPaths = [
+            {}, // Default configuration
+            { socketPath: '/var/run/docker.sock' },
+            { socketPath: '//./pipe/docker_engine' }, // Windows named pipe
+            { host: 'localhost', port: 2375 } // TCP (if configured)
+        ];
+
+        for (const config of socketPaths) {
+            try {
+                this.docker = new Docker(config);
+                // Test the connection
+                this.docker.ping().catch(() => {
+                    throw new Error('Docker connection failed');
+                });
+                break;
+            } catch (error) {
+                console.log(`Failed to connect to Docker with config:`, config);
+                if (config === socketPaths[socketPaths.length - 1]) {
+                    throw new Error('Could not connect to Docker. Please ensure Docker is running and properly configured.');
+                }
+            }
+        }
+        
         this.containers = new Map();
         this._wasTimeout = false; // Track retry state for Java
     }
@@ -67,7 +90,18 @@ class DockerManager {
                     : null
             };
         } catch (error) {
-            return { success: false, error: error.message };
+            // Provide more descriptive error messages
+            let errorMessage = error.message;
+            if (error.message.includes('ENOENT') && error.message.includes('docker.sock')) {
+                errorMessage = 'Docker is not running or not accessible. Please ensure Docker is started and running properly.';
+            } else if (error.message.includes('image') && error.message.includes('not found')) {
+                errorMessage = `Docker image for ${language} not found. Please run the build-images.sh script first.`;
+            }
+            return { 
+                success: false, 
+                error: errorMessage,
+                details: error.message // Include original error for debugging
+            };
         } finally {
             // Cleanup
             await this._cleanup(containerId, tempDir);
