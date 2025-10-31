@@ -134,24 +134,28 @@ export default function CodeEditor() {
 
   // Change language handler
   const handleLanguageChange = (e) => {
-    setLanguage(e.target.value);
-    // Optionally, set starter code for each language
-    switch (e.target.value) {
+    const newLang = e.target.value;
+    setLanguage(newLang);
+    // Set appropriate starter code for each language
+    switch (newLang) {
       case 'python':
-        setCode('# Start Coding in Python...');
+        setCode('print("Hello, World!")');
         break;
       case 'cpp':
-        setCode('// Start Coding in C++...');
+        setCode('#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}');
         break;
       case 'c':
-        setCode('// Start Coding in C...');
+        setCode('#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}');
         break;
       case 'java':
-        setCode('// Start Coding in Java...');
+        setCode('public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}');
         break;
       default:
-        setCode('// Start Coding in JavaScript...');
+        setCode('console.log("Hello, World!");');
     }
+    // Clear previous output when changing languages
+    setOutput('');
+    setRunError('');
   };
 
   // Copy code to clipboard
@@ -187,11 +191,19 @@ export default function CodeEditor() {
       const res = await fetch(`${API_URL}/api/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, code })
+        body: JSON.stringify({ 
+          sessionId, 
+          code,
+          language // Add the selected language to the request
+        })
       });
       const data = await res.json();
-      if (data.error) setRunError(data.error);
-      else setOutput(data.output);
+      if (data.error) {
+        setRunError(data.error);
+        if (data.output) setOutput(data.output); // Show compilation output if available
+      } else {
+        setOutput(data.output);
+      }
     } catch (err) {
       setRunError('Failed to run code.');
     }
