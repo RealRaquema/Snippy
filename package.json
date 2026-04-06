@@ -2,7 +2,7 @@
   "name": "snippy",
   "version": "1.0.0",
   "scripts": {
-    "build": "cd client && npm run build",
+    "build": "cd client && npm run build && mv dist ../dist",
     "install": "cd client && npm install"
   },
   "engines": {
