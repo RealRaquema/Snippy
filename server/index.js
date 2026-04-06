@@ -55,9 +55,71 @@ const io = new Server(server, {
   }
 });
 
+const sessionSockets = {}; // Track { sessionId: Set of socketIds }
+
+const funnyAdjectives = [
+  'Wacky', 'Sparkly', 'Fuzzy', 'Cosmic', 'Turbo', 'Silly', 'Zesty', 'Mighty', 'Sneaky', 'Happy', 'Quirky', 'Electric', 'Nimble', 'Jazzy', 'Bouncy'
+];
+const funnyNouns = [
+  'Panda', 'Noodle', 'Llama', 'Rocket', 'Unicorn', 'Taco', 'Pirate', 'Wizard', 'Narwhal', 'Gizmo', 'Pixel', 'Muffin', 'Bubble', 'Captain', 'Squirrel'
+];
+
+const generateFunnyUsername = (existing = new Set()) => {
+  let name;
+  let tries = 0;
+  do {
+    const adjective = funnyAdjectives[Math.floor(Math.random() * funnyAdjectives.length)];
+    const noun = funnyNouns[Math.floor(Math.random() * funnyNouns.length)];
+    name = `${adjective} ${noun}`;
+    if (!existing.has(name)) break;
+    tries += 1;
+  } while (tries < 10);
+  return name;
+};
+
 io.on('connection', (socket) => {
-  socket.on('join', ({ sessionId }) => {
-    socket.join(sessionId); // Join a specific "room" for that session
+  let userSessionId = null;
+
+  socket.on('join', async ({ sessionId }) => {
+    userSessionId = sessionId;
+    socket.join(sessionId);
+
+    // Track this socket in the session
+    if (!sessionSockets[sessionId]) {
+      sessionSockets[sessionId] = new Set();
+    }
+    sessionSockets[sessionId].add(socket.id);
+
+    // Update session with user info
+    const session = await CodeSession.findOne({ sessionId });
+    if (session) {
+      // Set the first user as admin if no admin exists
+      if (!session.adminId) {
+        session.adminId = socket.id;
+      }
+
+      // Add user to the session if not already there
+      const userExists = session.users.some(u => u.socketId === socket.id);
+      if (!userExists) {
+        const existingNames = new Set(session.users.map(u => u.username).filter(Boolean));
+        const username = generateFunnyUsername(existingNames);
+        session.users.push({
+          socketId: socket.id,
+          username,
+          permission: session.adminId === socket.id ? 'editor' : session.defaultPermission
+        });
+        await session.save();
+      }
+    }
+
+    // Emit updated user count and session info to all in the room
+    const activeUsers = sessionSockets[sessionId]?.size || 0;
+    io.to(sessionId).emit('userCountUpdate', { activeUsers });
+    io.to(sessionId).emit('sessionUpdate', {
+      adminId: session?.adminId,
+      defaultPermission: session?.defaultPermission,
+      users: session?.users || []
+    });
   });
 
   socket.on('codeChange', async ({ sessionId, code }) => {
@@ -69,7 +131,53 @@ io.on('connection', (socket) => {
     );
   });
 
-  socket.on('disconnect', () => {
+  socket.on('setDefaultPermission', async ({ sessionId, permission }) => {
+    const session = await CodeSession.findOne({ sessionId });
+    if (session && session.adminId === socket.id) {
+      session.defaultPermission = permission;
+      session.users = session.users.map(u => ({
+        ...u,
+        permission: u.socketId === session.adminId ? 'editor' : permission
+      }));
+      await session.save();
+      io.to(sessionId).emit('sessionUpdate', {
+        adminId: session.adminId,
+        defaultPermission: session.defaultPermission,
+        users: session.users
+      });
+    }
+  });
+
+  socket.on('setUserPermission', async ({ sessionId, targetSocketId, permission }) => {
+    const session = await CodeSession.findOne({ sessionId });
+    if (session && session.adminId === socket.id) {
+      const user = session.users.find(u => u.socketId === targetSocketId);
+      if (user) {
+        user.permission = permission;
+        await session.save();
+        io.to(sessionId).emit('sessionUpdate', {
+          adminId: session.adminId,
+          defaultPermission: session.defaultPermission,
+          users: session.users
+        });
+      }
+    }
+  });
+
+  socket.on('disconnect', async () => {
+    if (userSessionId) {
+      sessionSockets[userSessionId].delete(socket.id);
+      
+      // Remove user from session document
+      await CodeSession.updateOne(
+        { sessionId: userSessionId },
+        { $pull: { users: { socketId: socket.id } } }
+      );
+
+      // Emit updated user count
+      const activeUsers = sessionSockets[userSessionId]?.size || 0;
+      io.to(userSessionId).emit('userCountUpdate', { activeUsers });
+    }
   });
 });
 
@@ -206,8 +314,10 @@ app.post('/api/stop', async (req, res) => {
 });
 
 
-mongoose.connect(process.env.MONGO_URL).then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/snippy';
+mongoose.connect(mongoUrl)
+  .then(() => console.log(`MongoDB connected to ${mongoUrl}`))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Lightweight health endpoint to help Render / CI confirm runtimes are present
 app.get('/api/health', (req, res) => {
@@ -229,9 +339,15 @@ app.post('/api/create', async (req, res) => {
 });
 
 app.get('/api/session/:id', async (req, res) => {
-  const session = await CodeSession.findOne({ sessionId: req.params.id });
+  const sessionId = req.params.id;
+  const session = await CodeSession.findOne({ sessionId });
   if (!session) return res.status(404).send('Session not found');
-  res.json({ code: session.code });
+  res.json({
+    code: session.code,
+    adminId: session.adminId,
+    defaultPermission: session.defaultPermission,
+    users: session.users || []
+  });
 });
 
 

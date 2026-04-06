@@ -8,9 +8,10 @@ import { cpp } from '@codemirror/lang-cpp';
 import { oneDark } from '@codemirror/theme-one-dark';
 import './CodeEditor.css';
 import CopySessionLink from './CopySessionLink';
+import UserManagementModal from './UserManagementModal';
 
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://snippy-server.onrender.com';
 const socket = io(API_URL, { transports: ['websocket'] });
 
 
@@ -32,9 +33,18 @@ export default function CodeEditor() {
   const [language, setLanguage] = useState('javascript');
   const [copied, setCopied] = useState(false);
   const [editorWidth, setEditorWidth] = useState(50); // percent
+  const [activeUsers, setActiveUsers] = useState(0);
+  const [adminId, setAdminId] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userPermission, setUserPermission] = useState('viewer');
+  const [defaultPermission, setDefaultPermission] = useState('viewer');
+  const [sessionUsers, setSessionUsers] = useState([]);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const runBtnRef = useRef();
   const dragging = useRef(false);
   const codeMirrorRef = useRef();
+  const copyTimeoutRef = useRef(null);
+  const socketRef = useRef(socket);
   // Only focus editor on mount if it hasn't been focused by user
   useEffect(() => {
     let hasFocused = false;
@@ -55,7 +65,7 @@ export default function CodeEditor() {
 
 
   useEffect(() => {
-    socket.emit('join', { sessionId });
+    socketRef.current.emit('join', { sessionId });
     setLoading(true);
     setError('');
     fetch(`${API_URL}/api/session/${sessionId}`)
@@ -67,6 +77,8 @@ export default function CodeEditor() {
         if (data.code !== undefined) {
           setCode(data.code);
         }
+        setAdminId(data.adminId);
+        setDefaultPermission(data.defaultPermission || 'viewer');
         setLoading(false);
       })
       .catch(() => {
@@ -74,13 +86,34 @@ export default function CodeEditor() {
         setLoading(false);
       });
 
-    socket.on('codeChange', (newCode) => {
+    socketRef.current.on('codeChange', (newCode) => {
       setCode(newCode);
     });
 
+    socketRef.current.on('userCountUpdate', (data) => {
+      setActiveUsers(data.activeUsers);
+    });
+
+    socketRef.current.on('sessionUpdate', (data) => {
+      setAdminId(data.adminId);
+      setDefaultPermission(data.defaultPermission);
+      setSessionUsers(data.users || []);
+      // Find current user's permission
+      const currentUser = data.users.find(u => u.socketId === socketRef.current.id);
+      if (currentUser) {
+        setUserPermission(currentUser.permission);
+      }
+      setIsAdmin(data.adminId === socketRef.current.id);
+    });
+
     return () => {
-      socket.off('codeChange');
-      socket.disconnect();
+      socketRef.current.off('codeChange');
+      socketRef.current.off('userCountUpdate');
+      socketRef.current.off('sessionUpdate');
+      socketRef.current.disconnect();
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
     };
   }, [sessionId]);
 
@@ -126,8 +159,10 @@ export default function CodeEditor() {
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   const handleChange = (value) => {
+    // Only allow edit if user has 'editor' permission
+    if (userPermission !== 'editor') return;
     setCode(value);
-    socket.emit('codeChange', { sessionId, code: value });
+    socketRef.current.emit('codeChange', { sessionId, code: value });
   };
 
   // Change language handler
@@ -154,7 +189,19 @@ export default function CodeEditor() {
     setRunError('');
   };
 
-  // Copy code to clipboard
+  const handleDefaultPermissionChange = (e) => {
+    const newPermission = e.target.checked ? 'editor' : 'viewer';
+    setDefaultPermission(newPermission);
+    socketRef.current.emit('setDefaultPermission', { sessionId, permission: newPermission });
+  };
+
+  const handleUserPermissionChange = (targetSocketId, newPermission) => {
+    // Update local state if needed (modal already does this)
+    const updatedUsers = sessionUsers.map(u =>
+      u.socketId === targetSocketId ? { ...u, permission: newPermission } : u
+    );
+    setSessionUsers(updatedUsers);
+  };
   const handleCopyCode = async () => {
     try {
       if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
@@ -172,7 +219,11 @@ export default function CodeEditor() {
         document.body.removeChild(ta);
       }
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = setTimeout(() => {
+        setCopied(false);
+        copyTimeoutRef.current = null;
+      }, 1200);
     } catch (err) {
       // ignore copy errors
       console.error('Copy failed', err);
@@ -242,8 +293,45 @@ export default function CodeEditor() {
         <div className="header-session-group">
           <span className="filename">{sessionId}</span>
           <CopySessionLink sessionId={sessionId} />
+          <span className="active-users" title={`${activeUsers} active user${activeUsers !== 1 ? 's' : ''}`}>
+            👥 {activeUsers}
+          </span>
         </div>
         <div className="editor-header-actions">
+          {/* Permission toggle for admin only */}
+          {isAdmin && (
+            <div className="admin-controls-group">
+              <button 
+                className="user-management-btn"
+                onClick={() => setIsUserModalOpen(true)}
+                title="Manage individual user permissions"
+              >
+                👥 Users ▾
+              </button>
+              <div className="permission-toggle-group">
+                <div className="permission-switch" title="Toggle default permission for all current and new users">
+                  <input
+                    id="default-permission-switch"
+                    type="checkbox"
+                    checked={defaultPermission === 'editor'}
+                    onChange={handleDefaultPermissionChange}
+                    className="permission-switch-input"
+                  />
+                  <label htmlFor="default-permission-switch" className="permission-switch-label">
+                    <span className="permission-switch-inner">
+                      Default: {defaultPermission === 'editor' ? '✏️ Editor' : '👁️ Viewer'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Show current user's permission if not admin */}
+          {!isAdmin && (
+            <span className="permission-badge" title="Your permission level">
+              {userPermission === 'editor' ? '✏️ Can Edit' : '👁️ View Only'}
+            </span>
+          )}
           <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle theme" aria-label="Toggle theme">
             {theme === 'dark' ? (
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -297,10 +385,12 @@ export default function CodeEditor() {
           <div className="output-section terminal-output initial-terminal code-section">
             <CodeMirror
               value={code}
-              height="100vh" /* Changed height to a static value to fill the viewport */
+              height="100vh"
               extensions={[getExtension()]}
               theme={theme === 'dark' ? oneDark : undefined}
               onChange={handleChange}
+              editable={userPermission === 'editor'}
+              readOnly={userPermission !== 'editor'}
               style={{ fontFamily: 'Fira Mono, JetBrains Mono, Consolas, monospace', fontSize: '1.1rem', background: 'transparent' }}
               ref={codeMirrorRef}
             />
@@ -327,6 +417,17 @@ export default function CodeEditor() {
           </div>
         </div>
       </div>
+
+      <UserManagementModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        users={sessionUsers}
+        adminId={adminId}
+        currentSocketId={socketRef.current.id}
+        onPermissionChange={handleUserPermissionChange}
+        socket={socketRef.current}
+        sessionId={sessionId}
+      />
     </div>
   );
 }

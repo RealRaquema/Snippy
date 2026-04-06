@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import JoinSession from './JoinSession';
 import './Home.css';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://snippy-server.onrender.com';
 const socket = io(API_URL, { transports: ['websocket'] });
 import img from './img.jpg';
 

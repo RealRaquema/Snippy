@@ -104,7 +104,7 @@
   display: flex;
   align-items: stretch;
   gap: 0;
-  background: var(--filename-bg);
+  border: 1px solid #23272f;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.10);
   overflow: hidden;
@@ -142,14 +142,14 @@
   --header-bg: #23272f;
   --header-border: #222;
   --splitter: #181c24;
-  --run-btn: #1abc9c;
-  --run-btn-hover: #16a085;
+  --run-btn: #4f7ad8;
+  --run-btn-hover: #3d66cc;
   --stop-btn: #e74c3c;
   --stop-btn-hover: #c0392b;
-  --output-success: #1abc9c;
+  --output-success: #4f7ad8;
   --output-error: #e74c3c;
   --terminal-bg: #181c1c;
-  --terminal-text: #b6ffb6;
+  --terminal-text: #6f76ff;
   --font: 'Fira Mono', 'JetBrains Mono', 'Consolas', monospace;
   background: var(--bg);
   min-height: 100vh;
@@ -166,14 +166,14 @@
   --header-bg: #f3f3f7;
   --header-border: #e0e0e0;
   --splitter: #e0e0e0;
-  --run-btn: #1abc9c;
-  --run-btn-hover: #16a085;
+  --run-btn: #4f7ad8;
+  --run-btn-hover: #3d66cc;
   --stop-btn: #e74c3c;
   --stop-btn-hover: #c0392b;
-  --output-success: #1abc9c;
+  --output-success: #4f7ad8;
   --output-error: #e74c3c;
   --terminal-bg: #23272f;
-  --terminal-text: #1abc9c;
+  --terminal-text: #4f7ad8;
 }
 
 /* Light theme: copy session link styling */
@@ -185,9 +185,11 @@
 }
 .editor-app-root.light .copy-link-btn:hover,
 .editor-app-root.light .copy-link-btn:focus {
-  background: var(--terminal-bg);
-  color: #fff;
-  border-color: var(--run-btn-hover);
+  background: rgba(79, 122, 216, 0.14);
+  color: #263f6e;
+  border-color: rgba(79,122,216,0.3);
+  box-shadow: 0 4px 16px rgba(79,122,216,0.12);
+
   box-shadow: 0 4px 16px rgba(26,188,156,0.12);
 }
 
@@ -203,9 +205,10 @@
 .editor-app-root.light .language-dropdown:focus,
 .editor-app-root.light .code-language-dropdown:hover,
 .editor-app-root.light .language-dropdown:hover {
-  background: var(--terminal-bg);
-  color: #fff;
-  border-color: var(--run-btn-hover);
+  background: rgba(79, 122, 216, 0.12);
+  color: #263f6e;
+  border-color: rgba(79, 122, 216, 0.4);
+  box-shadow: 0 4px 16px rgba(79, 122, 216, 0.12);
 }
 
 /* Light theme: clear output button */
@@ -281,6 +284,18 @@
   background: var(--panel-bg);
   color: var(--text);
   opacity: 0.7;
+}
+
+.editor-app-root.light .header-session-group {
+  background: var(--panel-bg);
+  border-color: var(--header-border);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.editor-app-root.light .filename {
+  color: var(--text);
+  background: var(--filename-bg);
+  border-right: 1px solid var(--header-border);
 }
 
 .editor-header {
@@ -404,6 +419,7 @@
   background: #23272f;
   color: #fff;
   border: none;
+  border-radius: 6px;
   padding: 0.6rem 1.3rem;
   font-size: 1.08rem;
   font-weight: 500;
@@ -414,9 +430,9 @@
   justify-content: center;
 }
 .copy-link-btn:hover, .copy-link-btn:focus {
-  background: #1abc9c;
+  background: var(--run-btn);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(26,188,156,0.18);
+  box-shadow: 0 4px 16px rgba(79,122,216,0.18);
 }
 .initial-terminal {
   display: flex;
@@ -643,14 +659,14 @@
   height: 16px;
 }
 .copy-code-btn:hover {
-  background: #23272f;
-  color: #1abc9c;
+  background: rgba(79, 122, 216, 0.14);
+  color: #dfe8ff;
   transform: translateY(-1px);
 }
 .copy-code-btn.copied {
-  background: #1abc9c;
-  color: #07221a;
-  border-color: #16a085;
+  background: var(--run-btn);
+  color: #fff;
+  border-color: var(--run-btn-hover);
 }
 
 /* Light theme: copy code button */
@@ -660,19 +676,20 @@
   border: 1px solid var(--header-border);
 }
 .editor-app-root.light .copy-code-btn:hover {
-  background: var(--run-btn);
-  color: #fff;
-  border-color: var(--run-btn-hover);
+  background: rgba(79, 122, 216, 0.12);
+  color: #263f6e;
+  border-color: rgba(79,122,216,0.3);
 }
 .editor-app-root.light .copy-code-btn.copied {
   background: var(--run-btn);
   color: #fff;
   border-color: var(--run-btn-hover);
-  box-shadow: 0 2px 8px rgba(26,188,156,0.15);
+  box-shadow: 0 2px 8px rgba(79,122,216,0.15);
 }
 .copy-tooltip {
   position: absolute;
   transform: translateY(-80%);
+  opacity: 0.95;
   background: #111;
   color: #fff;
   font-size: 0.75rem;
@@ -680,4 +697,182 @@
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.35);
   white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Active users count */
+.active-users {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(26, 188, 156, 0.1);
+  color: #1abc9c;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05px;
+  margin-left: 0.8rem;
+}
+
+.editor-app-root.light .active-users {
+  background: rgba(26, 188, 156, 0.1);
+  color: #16a085;
+}
+
+/* Admin controls group */
+.admin-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-right: 0.8rem;
+}
+
+/* User management button */
+.user-management-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: rgba(52, 211, 153, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+.user-management-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  transform: translateY(-1px);
+}
+
+.user-management-btn:active {
+  transform: translateY(0);
+}
+
+.editor-app-root.light .user-management-btn {
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.editor-app-root.light .user-management-btn:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+/* Permission toggle group */
+.permission-toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.permission-switch {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.permission-switch-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.permission-switch-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(26, 188, 156, 0.12);
+  border: 1px solid rgba(26, 188, 156, 0.3);
+  color: #1abc9c;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.permission-switch-input:checked + .permission-switch-label {
+  background: rgba(26, 188, 156, 0.3);
+  border-color: rgba(26, 188, 156, 0.5);
+  color: #07221a;
+}
+
+.permission-switch-label:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(26, 188, 156, 0.12);
+}
+
+.permission-switch-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.permission-toggle-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Permission badge for non-admin users */
+.permission-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(79, 122, 216, 0.3);
+  color: var(--run-btn);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05px;
+  margin-right: 0.5rem;
+}
+
+.editor-app-root.light .permission-badge {
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(79, 122, 216, 0.3);
+  color: var(--run-btn);
+}
+
+/* Light theme: Permission toggle */
+.editor-app-root.light .permission-toggle-label {
+  background: rgba(26, 188, 156, 0.08);
+  border-color: rgba(26, 188, 156, 0.3);
+  color: #16a085;
+}
+
+.editor-app-root.light .permission-toggle-label:hover {
+  background: rgba(26, 188, 156, 0.15);
+  border-color: #16a085;
+  box-shadow: 0 2px 8px rgba(26, 188, 156, 0.12);
+}
+
+.editor-app-root.light .permission-toggle-input {
+  border-color: #16a085;
+}
+
+.editor-app-root.light .permission-toggle-input:checked {
+  background: #16a085;
+  border-color: #16a085;
 }
