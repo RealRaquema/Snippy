@@ -2,11 +2,5 @@
   "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
   "cleanUrls": true,
-  "trailingSlash": false,
-  "routes": [
-    {
-      "src": "/(?!.*\\.)",
-      "dest": "/index.html"
-    }
-  ]
+  "trailingSlash": false
 }
