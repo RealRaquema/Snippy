@@ -1,10 +1,15 @@
 {
   "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(?!.*\\\\.)",
+      "dest": "/index.html",
+      "status": 200
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ]
 }
