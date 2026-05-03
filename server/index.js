@@ -314,9 +314,19 @@ app.post('/api/stop', async (req, res) => {
 });
 
 
-const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/snippy';(mongoUrl)
-  .then(() => console.log(`MongoDB connected to ${mongoUrl}`))
-  .catch(err => console.error('MongoDB connection error:', err));
+const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/snippy';
+
+async function connectToMongo() {
+  try {
+    await mongoose.connect(mongoUrl);
+    console.log(`MongoDB connected to ${mongoUrl}`);
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  }
+}
+
+connectToMongo();
 
 // Lightweight health endpoint to help Render / CI confirm runtimes are present
 app.get('/api/health', (req, res) => {
