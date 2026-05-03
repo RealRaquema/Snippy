@@ -314,7 +314,7 @@ app.post('/api/stop', async (req, res) => {
 });
 
 
-const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/snippy';
+const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || process.env.DB_CONNECT || 'mongodb://127.0.0.1:27017/snippy';
 
 async function connectToMongo() {
   try {
